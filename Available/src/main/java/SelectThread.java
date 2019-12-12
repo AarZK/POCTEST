@@ -38,7 +38,7 @@ public class SelectThread extends Thread {
 
     }
 
-    public static void countryCount() {
+    public void countryCount() {
         Connection connection = JDBCUtil.getConnection();
         String sql = "select count(1) from available_test where country=?;";
         String country = new Faker().country().name();
@@ -49,7 +49,7 @@ public class SelectThread extends Thread {
             preparedStatement.setString(1, country);
             total = preparedStatement.executeQuery();
             while (total.next()) {
-                System.out.println(country + ":" + total.getInt(1));
+                System.out.println(">> "+country + ":" + total.getInt(1));
             }
         } catch (SQLException e) {
             e.printStackTrace();

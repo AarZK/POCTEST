@@ -1,4 +1,3 @@
-import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -16,8 +15,11 @@ public class Options {
         System.out.println("4:并发查询");
         System.out.println("5:创建索引");
         System.out.println("6:删除索引");
+        System.out.println("7:增加列(初始化)");
+        System.out.println("8:删除列");
+        System.out.println("9:并发转账");
         System.out.println("q:退出");
-        System.out.println(">> 请输入操作序号：");
+        System.out.println("<< 请输入操作序号：");
 
         String optionFlag = null;
         Scanner scanner = new Scanner(System.in);
@@ -27,18 +29,19 @@ public class Options {
 
         switch (optionFlag) {
             case "1":
-                createTable();
+                PrepareData.prepareTable();
                 menu();
                 break;
             case "2":
-                insertRecord();
+                concur("2");
+                menu();
                 break;
             case "3":
                 PrepareData.getCount();
                 menu();
                 break;
             case "4":
-                concurSelect();
+                concur("4");
                 menu();
                 break;
             case "5":
@@ -47,6 +50,19 @@ public class Options {
                 break;
             case "6":
                 PrepareData.dropIndex();
+                menu();
+                break;
+            case "7":
+                PrepareData.addColumn();
+                menu();
+                break;
+            case "8":
+                PrepareData.deleteColumn();
+                menu();
+                break;
+            case "9":
+                concur("9");
+                PrepareData.getAvgBalance();
                 menu();
                 break;
             case "q":
@@ -58,21 +74,17 @@ public class Options {
         }
     }
 
-    public static void createTable() {
-        PrepareData.prepareTable();
-    }
-
-    public static void insertRecord() {
+    public static void concur(String optionFlag) {
         Scanner scanner = new Scanner(System.in);
 
         int total = 0;
-        System.out.println("请输入预期插入总记录数:");
+        System.out.println("<< 请输入执行次数:");
         new Scanner(System.in);
         if (scanner.hasNextLine()) {
             total = Integer.parseInt(scanner.nextLine());
         }
         int concurrent = 0;
-        System.out.println("请输入并发数:");
+        System.out.println("<< 请输入并发数:");
         new Scanner(System.in);
         if (scanner.hasNextLine()) {
             concurrent = Integer.parseInt(scanner.nextLine());
@@ -84,58 +96,32 @@ public class Options {
         //创建一个初始值为n的倒数计数器
         final CountDownLatch countDownLatch = new CountDownLatch(total);
         int loopFlag;
-        for (loopFlag = 0; loopFlag < total; loopFlag++) {
+        int from = 0;
+        from = PrepareData.getMaxSeq() + 1;
+        for (loopFlag = from; loopFlag < total + from; loopFlag++) {
 //            Thread thread = new InsertThread(semaphore, countDownLatch);
-            executor.execute(new InsertThread(semaphore, countDownLatch));
-//            thread.start();
+            switch (optionFlag) {
+                case "2":
+                    executor.execute(new InsertThread(semaphore, countDownLatch, loopFlag));
+                    break;
+                case "4":
+                    executor.execute(new SelectThread(semaphore, countDownLatch));
+                    break;
+                case "9":
+                    executor.execute(new TransferThread(semaphore, countDownLatch));
+                    break;
+            }
 
-        }
-        // 阻塞当前线程，直到倒数计数器倒数到0
-        try {
-            countDownLatch.await();
-            executor.shutdown();
-            menu();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public static void concurSelect() {
-        Scanner scanner = new Scanner(System.in);
-
-        int total = 0;
-        System.out.println("请输入总查询次数:");
-        new Scanner(System.in);
-        if (scanner.hasNextLine()) {
-            total = Integer.parseInt(scanner.nextLine());
-        }
-        int concurrent = 0;
-        System.out.println("请输入并发数:");
-        new Scanner(System.in);
-        if (scanner.hasNextLine()) {
-            concurrent = Integer.parseInt(scanner.nextLine());
-        }
-        //线程池
-        ExecutorService executor = Executors.newFixedThreadPool(concurrent);
-        //定义信号量，只能n个线程同时访问
-        final Semaphore semaphore = new Semaphore(concurrent);
-        //创建一个初始值为n的倒数计数器
-        final CountDownLatch countDownLatch = new CountDownLatch(total);
-        int loopFlag;
-        for (loopFlag = 0; loopFlag < total; loopFlag++) {
-//            Thread thread = new InsertThread(semaphore, countDownLatch);
-            executor.execute(new SelectThread(semaphore, countDownLatch));
 //            thread.start();
         }
         // 阻塞当前线程，直到倒数计数器倒数到0
         try {
             countDownLatch.await();
             executor.shutdown();
-            menu();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
     }
+
 }
