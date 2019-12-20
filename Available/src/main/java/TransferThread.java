@@ -36,7 +36,7 @@ public class TransferThread extends Thread {
     private void trandfer() {
         Connection connection = JDBCUtil.getConnection();
         PreparedStatement preparedStatement = null;
-        String count = "select count(1) from available_test;";
+        String count = "select count(1) from people;";
         ResultSet resultSet = null;
         int limit = 0;
         try {
@@ -55,15 +55,15 @@ public class TransferThread extends Thread {
         Double transfer_amount = Double.valueOf(amount_str);
 
         int user1 = (int) (Math.random() * limit) + 1;
-        String userName1="select fullname from available_test where seq=?;";
-        String pay = "UPDATE available_test SET balance=balance-? WHERE seq=?;";
+        String userName1="select fullname from people where seq=?;";
+        String pay = "UPDATE people SET balance=balance-? WHERE seq=?;";
 
         int user2 = (int) (Math.random() * limit) + 1;
         while (user1 == user2) {
             user2 = (int) (Math.random() * limit) + 1;
         }
-        String userName2="select fullname from available_test where seq=?;";
-        String receive = "UPDATE available_test SET balance=balance+? WHERE seq=?;";
+        String userName2="select fullname from people where seq=?;";
+        String receive = "UPDATE people SET balance=balance+? WHERE seq=?;";
 
         try {
             preparedStatement=connection.prepareStatement(userName1);
@@ -89,13 +89,13 @@ public class TransferThread extends Thread {
             preparedStatement.setDouble(1, transfer_amount);
             preparedStatement.setInt(2, user2);
             preparedStatement.executeUpdate();
+            JDBCUtil.commitTransaction(connection);
+            System.out.println(">> "+userName1+" 成功向 "+userName2+" 转账："+transfer_amount+" 元");
         } catch (SQLException e) {
+            e.printStackTrace();
             System.out.println(">> "+userName1+" 向 "+userName2+" 转账失败，事务回滚...");
             JDBCUtil.rollBackTransaction(connection);
-            e.printStackTrace();
         } finally {
-            System.out.println(">> "+userName1+" 成功向 "+userName2+" 转账："+transfer_amount+" 元");
-            JDBCUtil.commitTransaction(connection);
             JDBCUtil.release(resultSet, connection, preparedStatement);
         }
 

@@ -47,7 +47,7 @@ public class InsertThread extends Thread {
         }
         Connection connection = JDBCUtil.getConnection();
         PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO available_test ( id, fullname, sex, birthday, country, addr, phone, university, company ,seq)\n" +
+        String sql = "INSERT INTO people ( id, fullname, sex, birthday, country, addr, phone, university, company ,seq)\n" +
                 "VALUES\n" +
                 "\t( ?, ?, ?, ?, ?, ?, ?, ?, ? ,?);";
         try {
@@ -69,7 +69,6 @@ public class InsertThread extends Thread {
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println(">> id:" + people.id + " 插入失败,重新插入……");
-            JDBCUtil.release(null, connection, preparedStatement);
             insertRecord(new People(new Faker()));
         } finally {
             JDBCUtil.release(null, connection, preparedStatement);

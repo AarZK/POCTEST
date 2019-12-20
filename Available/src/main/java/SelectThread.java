@@ -40,7 +40,7 @@ public class SelectThread extends Thread {
 
     public void countryCount() {
         Connection connection = JDBCUtil.getConnection();
-        String sql = "select count(1) from available_test where country=?;";
+        String sql = "select count(1) from people where country=?;";
         String country = new Faker().country().name();
         PreparedStatement preparedStatement = null;
         ResultSet total = null;
